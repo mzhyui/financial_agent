@@ -1,0 +1,10 @@
+.codemap/
+.venv
+wandb/
+results/
+data/*
+logs/
+lora_finetuned_model/
+checkpoints/
+
+*.pth
