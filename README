@@ -1,0 +1,13 @@
+# FinAI Proj
+
+
+## Model Training
+- Random Forest
+    - Decision Tree
+
+
+## Agent
+- [ ] single agent api
+    - [ ] with rag
+    - [ ] with character setting
+- [ ] alpha vantage or local file retrive

@@ -1,0 +1,66 @@
+{
+  "name": "Stock_Info_Retriever",
+  "version": "1.0.0",
+  "description": "Retrieves stock information based on user queries.",
+  "author": null,
+  "license": "MIT",
+  "active": false,
+  "hubId": "stock-info-retriever",
+  "examples": [
+    {
+      "prompt": "Get the current price of AAPL",
+      "call": "{\"symbol\": \"AAPL\"}"
+    }
+  ],
+  "entrypoint": {
+    "file": "handler.js",
+    "params": {
+      "symbol": {
+        "type": "string",
+        "required": true,
+        "input": {
+          "type": "text",
+          "default": "AAPL",
+          "placeholder": "AAPL",
+          "hint": "The stock symbol to retrieve information for"
+        },
+        "value": "AAPL"
+      },
+      "start_date": {
+        "type": "string",
+        "required": false,
+        "input": {
+          "type": "date",
+          "default": "",
+          "placeholder": "YYYY-MM-DD",
+          "hint": "The start date for historical data (optional)"
+        },
+        "value": ""
+      },
+      "end_date":{
+        "type": "string",
+        "required": false,
+        "input": {
+          "type": "date",
+          "default": "",
+          "placeholder": "YYYY-MM-DD",
+          "hint": "The end date for historical data (optional)"
+        },
+        "value": ""
+      }
+    }
+  },
+  "setup_args": {
+    "ALPHAVANTAGE_API_KEY": {
+      "type": "string",
+      "required": true, 
+      "input": {
+        "type": "text", 
+        "default": "YOUR_ALPHAVANTAGE_API_KEY",
+        "placeholder": "4MFYSPOPV210V5WT",
+        "hint": "The API key for the ALPHAVANTAGE API"
+      },
+      "value": "4MFYSPOPV210V5WT"
+    }
+  }
+}
