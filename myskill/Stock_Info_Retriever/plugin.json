@@ -1,17 +1,11 @@
 {
   "name": "Stock_Info_Retriever",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "description": "Retrieves stock information based on user queries.",
   "author": null,
   "license": "MIT",
   "active": false,
   "hubId": "stock-info-retriever",
-  "examples": [
-    {
-      "prompt": "Get the current price of AAPL",
-      "call": "{\"symbol\": \"AAPL\"}"
-    }
-  ],
   "entrypoint": {
     "file": "handler.js",
     "params": {
@@ -61,6 +55,27 @@
         "hint": "The API key for the ALPHAVANTAGE API"
       },
       "value": "4MFYSPOPV210V5WT"
+    },
+    "LOCALSRVER_CSV_URL": {
+      "type": "string",
+      "required": false,
+      "input": {
+        "type": "text",
+        "default": "",
+        "placeholder": "",
+        "hint": "The URL of the local server providing CSV data, e.g., http://localhost:8081/"
+      },
+      "value": ""
     }
-  }
+  },
+  "examples": [
+    {
+      "prompt": "Retrieve historical data for AAPL from 2023-01-01 to 2023-12-31",
+      "call": "{\"symbol\": \"AAPL\", \"start_date\": \"2023-01-01\", \"end_date\": \"2023-12-31\"}"
+    },
+    {
+      "prompt": "What is the stock price of TSLA?",
+      "call": "{\"symbol\": \"TSLA\"}"
+    }
+  ]
 }

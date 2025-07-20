@@ -8,6 +8,8 @@
 
 ## Agent
 - [ ] single agent api
+    - [ ] TODO 2025-07-20 git.V.aab24: in a single thread
     - [ ] with rag
     - [ ] with character setting
-- [ ] alpha vantage or local file retrive
+- [x] alpha vantage or local file retrive
+    - [ ] if local exists none, use api instead

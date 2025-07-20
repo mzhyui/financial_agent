@@ -4,12 +4,8 @@ This agent skill retrieves stock information using the Alpha Vantage API.
 
 ## Setup
 
-1. Obtain a free API key from [Alpha Vantage](https://www.alphavantage.co/support/#api-key).
-2. Set the API key as an environment variable:
-    ```bash
-    export ALPHAVANTAGE_API_KEY=your_api_key_here
-    ```
-3. Install any required dependencies as specified in the project.
+1. Fill the API key
+2. (Optional) Provide a local server url, where "URL/stock_market_data-TICKER.csv" is available for fetching.
 
 ## Usage
 

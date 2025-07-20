@@ -10,6 +10,8 @@ module.exports.runtime = {
     const callerId = `${this.config.name}-v${this.config.version}`;
     // const apiKey = `this.config.entrypoint.params.apiKey || ""`.trim();
     const apiKey = this.config.setup_args.ALPHAVANTAGE_API_KEY.value || "";
+    const local_server = this.config.setup_args.LOCALSRVER_CSV_URL.value || "";
+    const currentDate = new Date().toISOString().split('T')[0]; // Get current date in YYYY-MM-DD format
     
     try {
       const ticker = symbol || "";
@@ -25,36 +27,37 @@ module.exports.runtime = {
       this.logger(`Retrieving stock data for ${ticker.toUpperCase()}...`);
       this.introspect(`Retrieving stock data for ${ticker.toUpperCase()}...`);
       
-      // Construct API URL
-      const baseUrl = "https://www.alphavantage.co/query";
-      const params = new URLSearchParams({
-        function: "TIME_SERIES_DAILY",
-        symbol: ticker.toUpperCase(),
-        outputsize: "full",
-        apikey: apiKey
-      });
+      // // Construct API URL
+      // const baseUrl = "https://www.alphavantage.co/query";
+      // const params = new URLSearchParams({
+      //   function: "TIME_SERIES_DAILY",
+      //   symbol: ticker.toUpperCase(),
+      //   outputsize: "full",
+      //   apikey: apiKey
+      // });
       
-      const url = `${baseUrl}?${params.toString()}`;
+      // const url = `${baseUrl}?${params.toString()}`;
       
-      // Make API request
-      const response = await fetch(url, { timeout: 30000 });
+      // // Make API request
+      // const response = await fetch(url, { timeout: 30000 });
       
-      if (!response.ok) {
-        throw new Error(`API request failed with status: ${response.status}`);
-      }
+      // if (!response.ok) {
+      //   throw new Error(`API request failed with status: ${response.status}`);
+      // }
       
-      const data = await response.json();
+      // const data = await response.json();
       
-      // Check for API errors
-      if (data["Error Message"]) {
-        throw new Error(`API Error: ${data["Error Message"]}`);
-      }
+      // // Check for API errors
+      // if (data["Error Message"]) {
+      //   throw new Error(`API Error: ${data["Error Message"]}`);
+      // }
       
-      if (data["Note"]) {
-        throw new Error(`API Limit: ${data["Note"]}`);
-      }
+      // if (data["Note"]) {
+      //   throw new Error(`API Limit: ${data["Note"]}`);
+      // }
       
-      const timeSeriesData = data["Time Series (Daily)"];
+      // const timeSeriesData = fetchCsvData(ticker, local_server, apiKey);
+      const timeSeriesData = await this.fetchCsvData(ticker, local_server, apiKey);
       
       if (!timeSeriesData) {
         throw new Error("No time series data found in API response");
@@ -114,6 +117,70 @@ module.exports.runtime = {
         error: e.message,
         message: `Failed to retrieve stock data. Error: ${e.message}`
       };
+    }
+  },
+  /**
+   * Fetch csv data from local server or alphavantage
+   * @param {string} symbol - Stock ticker symbol
+   * @param {string} local_server_url
+   * @param {string} apiKey - API key for Alphavantage
+   * @returns {Promise<Object>} Parsed CSV data
+   **/
+  fetchCsvData: async function(symbol, local_server_url, apiKey) {
+    if (local_server_url !== "") {
+      const url = `${local_server_url}/stock_market_data-${symbol.toUpperCase()}.csv`;
+      const response = await fetch(url, { timeout: 3000 });
+      
+      if (!response.ok) {
+        throw new Error(`Local server request failed with status: ${response.status}`);
+      }
+      
+      // Get CSV text content instead of JSON
+      const csvText = await response.text();
+      
+      if (!csvText || csvText.trim().length === 0) {
+        this.introspect(`No data found for symbol: ${symbol}`);
+        throw new Error(`No data found for symbol: ${symbol}`);
+      }
+      
+      // Parse CSV and convert to the same format as Alpha Vantage API
+      const parsedData = this.parseCsvToTimeSeriesFormat(csvText);
+      
+      if (!parsedData || Object.keys(parsedData).length === 0) {
+        this.introspect(`No valid data found for symbol: ${symbol}`);
+        throw new Error(`No valid data found for symbol: ${symbol}`);
+      }
+      
+      this.introspect(`Retrieved ${Object.keys(parsedData).length} days of data from local server for ${symbol}`);
+      return parsedData;
+    }
+    else {
+      const baseUrl = "https://www.alphavantage.co/query";
+      const params = new URLSearchParams({
+        function: "TIME_SERIES_DAILY",
+        symbol: symbol.toUpperCase(),
+        outputsize: "full",
+        apikey: apiKey
+      });
+      
+      const url = `${baseUrl}?${params.toString()}`;
+      const response = await fetch(url, { timeout: 30000 });
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data["Error Message"]) {
+        throw new Error(`API Error: ${data["Error Message"]}`);
+      }
+      
+      if (data["Note"]) {
+        throw new Error(`API Limit: ${data["Note"]}`);
+      }
+      
+      return data["Time Series (Daily)"];
     }
   },
   
@@ -177,6 +244,81 @@ module.exports.runtime = {
     dataFrame.sort((a, b) => new Date(b.date) - new Date(a.date));
     
     return dataFrame;
+  },
+  /**
+   * Parse CSV text to time series format
+   * @param {string} csvText - CSV text content
+   * @returns {Object} Parsed time series data
+   */
+  parseCsvToTimeSeriesFormat: function(csvText) {
+    // Simple CSV parser that handles quoted values
+    function parseCSVLine(line) {
+      const result = [];
+      let current = '';
+      let inQuotes = false;
+      
+      for (let i = 0; i < line.length; i++) {
+        const char = line[i];
+        
+        if (char === '"') {
+          inQuotes = !inQuotes;
+        } else if (char === ',' && !inQuotes) {
+          result.push(current.trim());
+          current = '';
+        } else {
+          current += char;
+        }
+      }
+      
+      result.push(current.trim());
+      return result;
+    }
+    
+    const lines = csvText.trim().split('\n');
+    
+    if (lines.length < 2) {
+      throw new Error('Invalid CSV format: insufficient data');
+    }
+    
+    const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().replace(/"/g, ''));
+    
+    // Find column indices with more flexible matching
+    const findColumnIndex = (keywords) => {
+      return headers.findIndex(h => keywords.some(keyword => h.includes(keyword)));
+    };
+    
+    const dateIndex = findColumnIndex(['date', 'time', 'timestamp']);
+    const openIndex = findColumnIndex(['open']);
+    const highIndex = findColumnIndex(['high']);
+    const lowIndex = findColumnIndex(['low']);
+    const closeIndex = findColumnIndex(['close', 'adj close', 'adjusted']);
+    const volumeIndex = findColumnIndex(['volume', 'vol']);
+    
+    if ([dateIndex, openIndex, highIndex, lowIndex, closeIndex].some(idx => idx === -1)) {
+      throw new Error(`Invalid CSV format: missing required columns. Found headers: ${headers.join(', ')}`);
+    }
+    
+    const timeSeriesData = {};
+    
+    for (let i = 1; i < lines.length; i++) {
+      const values = parseCSVLine(lines[i]);
+      
+      if (values.length <= Math.max(dateIndex, openIndex, highIndex, lowIndex, closeIndex)) {
+        continue;
+      }
+      
+      const date = values[dateIndex].replace(/"/g, '');
+      
+      timeSeriesData[date] = {
+        "1. open": values[openIndex].replace(/"/g, ''),
+        "2. high": values[highIndex].replace(/"/g, ''),
+        "3. low": values[lowIndex].replace(/"/g, ''),
+        "4. close": values[closeIndex].replace(/"/g, ''),
+        "5. volume": volumeIndex !== -1 ? values[volumeIndex].replace(/"/g, '') : "0"
+      };
+    }
+    
+    return timeSeriesData;
   },
   
   /**
