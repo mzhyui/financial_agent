@@ -6,5 +6,8 @@ data/*
 logs/
 lora_finetuned_model/
 checkpoints/
+__pycache__/
 
 *.pth
+
+test*
