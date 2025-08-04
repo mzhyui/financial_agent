@@ -1,6 +1,7 @@
 .codemap/
 .venv
 wandb/
+graphics/
 results/
 data/*
 logs/
