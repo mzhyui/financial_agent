@@ -1,0 +1,19 @@
+credentials:
+  usernames:
+    jsmith:
+      email: jsmith@gmail.com
+      name: John Smith
+      password: abc123  # This will be hashed
+    rbriggs:
+      email: rbriggs@gmail.com
+      name: Rebecca Briggs
+      password: def456  # This will be hashed
+
+cookie:
+  expiry_days: 30
+  key: some_signature_key  # Must be string
+  name: some_cookie_name
+
+preauthorized:
+  emails:
+  - melsby@gmail.com
